@@ -209,9 +209,11 @@ SQLC **
 
 ### Installing SQLC
 
-> brew install sqlc
+```bash
+brew install sqlc
+```
 
-Use sqlc init to generate a sqlc.yaml file
+Use `sqlc init` to generate a `sqlc.yaml` file.
 
 ```yaml
 version: "2"
