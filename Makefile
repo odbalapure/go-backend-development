@@ -16,5 +16,8 @@ migrateup:
 migratedown:
 	migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
-# Tells the Makefile tells make that `createdb` is not a file name
-.PHONY: createdb dropdb remove migrateup migratedown
+sqlc:
+	sqlc generate
+
+# Tells make that these are not file names
+.PHONY: createdb dropdb remove migrateup migratedown sqlc

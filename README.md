@@ -185,3 +185,49 @@ Applying the migrations to our postgres database
 migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 ```
 
+## Using ORM
+
+We can use golang's builint sql module but
+- Manual mapping SQL fields to variables
+- Easy to make mistakes, not caught until runtime
+
+GORM
+- CRUD functions already implemented, less production code
+- But learn writing queries using GORM functions
+- Runs slowly on high load
+
+SQLX
+- This is a middle ground; its fast and easy to use
+- Field mappings via query text and struct tags
+- Failures won't occur until runtime
+
+SQLC ** 
+- Fast and easy to use
+- Automatic code generation
+- Catch SQL query errors before generating code
+- Full support for Postgres; MySQL is experimental
+
+### Installing SQLC
+
+> brew install sqlc
+
+Use sqlc init to generate a sqlc.yaml file
+
+```yaml
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "./db/query/"
+    schema: "./db/migration/"
+    gen:
+      go:
+        package: "db"
+        out: "./db/sqlc"
+        # sql_package: "pgx/v5"
+```
+
+Now add you CRUD queries in the `query/account.sql` and the execute `sqlc generate`.
+
+This now creates `account.sql.go`, `db.go` and `models.go` under the  `sqlc` folder.
+
+No need to write CRUD functions ourselves.
