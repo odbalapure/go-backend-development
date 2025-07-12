@@ -19,5 +19,8 @@ migratedown:
 sqlc:
 	sqlc generate
 
+test:
+	go test -v -cover ./...
+
 # Tells make that these are not file names
-.PHONY: createdb dropdb remove migrateup migratedown sqlc
+.PHONY: createdb dropdb remove migrateup migratedown sqlc test

@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 You will get the following error after runnng the test
 > cannot connect to db: sql: unknown driver "posgtres"
 
-So we need to install a postgres drive
+So we need to install a postgres driver
 > go get github.com/lib/pq
 
 Keep the import to avoid the error 
@@ -57,6 +57,8 @@ We can install an external library for assertion eg: `testify`. Read more about 
 
 Install it using
 > go get github.com/stretchr/testify
+
+Run tests where ever present and show coverage
 
 ```go
 package db
@@ -87,4 +89,12 @@ func TestCreatAccount(t *testing.T) {
 }
 ```
 
-> Running the main test suite also shows you the code coverage.
+```bash
+ombalapure@Oms-MacBook-Air simple-bank % go test -v -cover ./...
+        simple-bank             === RUN   TestCreatAccount
+--- PASS: TestCreatAccount (0.08s)
+PASS
+coverage: 6.5% of statements
+ok      simple-bank/db/sqlc     0.701s  coverage: 6.5% of statements
+        simple-bank/util                coverage: 0.0% of statements
+```
