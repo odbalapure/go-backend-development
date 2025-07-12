@@ -233,3 +233,27 @@ Now add you CRUD queries in the `query/account.sql` and the execute `sqlc genera
 This now creates `account.sql.go`, `db.go` and `models.go` under the  `sqlc` folder.
 
 No need to write CRUD functions ourselves.
+
+***
+
+## Transactions
+
+A single unit of work often made up of multiple db operations.
+
+Eg: Transfer of 10 USD from account1 to account2:
+- Create a transfer record with amount = 10
+- Create an account entry for account1 with amount = -10
+- Create an account entry for account2 with amount = +10
+- Subtract 10 from the balance of account1
+- Add 10 to the balance of account2
+
+Why do we need it?
+- Consistent unit of work, even in case of system failures
+- Isolation b/w programs
+
+How to write a transcation?
+```sql
+BEGIN;
+...
+COMMIT;
+```

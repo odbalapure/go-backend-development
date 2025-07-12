@@ -7,7 +7,7 @@ package db
 
 import (
 	"context"
-	"database/sql"
+	_ "database/sql"
 )
 
 const createTransfer = `-- name: CreateTransfer :one
@@ -23,7 +23,7 @@ INSERT INTO transfers (
 type CreateTransferParams struct {
 	FromAccountID int64
 	ToAccountID   int64
-	Amount        sql.NullInt64
+	Amount        int64
 }
 
 func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
