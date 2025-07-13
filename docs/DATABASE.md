@@ -338,4 +338,75 @@ WHERE id = sqlc.arg(id)
 RETURNING *;
 ```
 
-> `sqlc.arg(amount)` will let use pass the amount param instead of balance which is a little misleading 
+> `sqlc.arg(amount)` will let us pass the amount param instead of balance which is a little misleading 
+
+## Update GOTCHA
+
+Using NO FOR UPDATE can still cause deadlocks
+
+Transaction 1:
+```sql
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+```
+
+Transaction 2:
+```sql
+UPDATE accounts SET balance = balance - 100 WHERE id = 2;
+UPDATE accounts SET balance = balance + 100 WHERE id = 1;
+```
+
+Both are transferring money between accounts:
+- T1 locks id = 1, then tries to lock id = 2
+- T2 locks id = 2, then tries to lock id = 1
+- Deadlock! Each is holding a lock the other needs.
+
+### The Fix
+
+If all transactions always lock rows in ascending order (e.g., always id = 1 before id = 2), then you can never have a deadlock from order inversion.
+
+> It could just as well be descending - doesn't matter.
+
+Now in the code, add the following check
+
+```go
+if arg.FromAccountID < arg.ToAccountID {
+    // Update account balance for account1
+    result.FromAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+        Amount: -arg.Amount,
+        ID:     arg.FromAccountID,
+    })
+    if err != nil {
+        return err
+    }
+
+    // Update account balance for account2
+    result.ToAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+        Amount: arg.Amount,
+        ID:     arg.ToAccountID,
+    })
+    if err != nil {
+        return err
+    }
+} else {
+    // Update account balance for account2
+    result.ToAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+        Amount: arg.Amount,
+        ID:     arg.ToAccountID,
+    })
+    if err != nil {
+        return err
+    }
+
+    // Update account balance for account1
+    result.FromAccount, err = q.AddAccountBalance(ctx, AddAccountBalanceParams{
+        Amount: -arg.Amount,
+        ID:     arg.FromAccountID,
+    })
+    if err != nil {
+        return err
+    }
+}
+```
+
+The logic can be de-duplicated by moving it to a method.
