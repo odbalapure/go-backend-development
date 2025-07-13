@@ -43,7 +43,7 @@ services:
     image: postgres
     # Provide the password for postgres
     env:
-        POSTGRES_PASSWORD: postgres
+        POSTGRES_PASSWORD: secret
         POSTGRES_USER: root
         POSTGRES_DB: simple_bank
     # Set health checks to wait until postgres has started
