@@ -53,3 +53,15 @@ services:
         --health-timeout 5s
         --health-retries 5
 ```
+
+This workflow will fail again because migrate will not work.
+
+Go to the [releases section](https://github.com/golang-migrate/migrate/releases) and copy the link address for [linux](https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz).
+
+Install the golang-migrate before running `migrateup` step.
+
+```yml
+- name: Install golang-migrate
+    run: |
+    curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
+```
