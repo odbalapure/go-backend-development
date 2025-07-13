@@ -64,6 +64,8 @@ Install the golang-migrate before running `migrateup` step.
 - name: Install golang-migrate
     run: |
     curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
-    sudo mv migrate.linux-amd64.tar.gz /usr/bin/
+    sudo mv migrate.linux-amd64.tar.gz /usr/bin/migrate
     which migrate
 ```
+
+> This movies and renames the binary file to `migrate`.
