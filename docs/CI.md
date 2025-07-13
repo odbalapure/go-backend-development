@@ -32,3 +32,24 @@ jobs:
     - name: Test
       run: make test
 ```
+
+This job will fail as postgres is not setup.
+
+```yml
+services:
+    # Label used to access the service container
+    postgres:
+    # Docker Hub image
+    image: postgres
+    # Provide the password for postgres
+    env:
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_USER: root
+        POSTGRES_DB: simple_bank
+    # Set health checks to wait until postgres has started
+    options: >-
+        --health-cmd pg_isready
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
+```
