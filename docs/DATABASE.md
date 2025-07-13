@@ -257,3 +257,55 @@ BEGIN;
 ...
 COMMIT;
 ```
+
+Special care needs to be taken when dealing with "update balance" step.
+
+When account1 is reading existing balance to deduct the amount
+The transaction tx-2 should not be able to read from account1 balance
+Until tx-1 reads and updates it
+
+This is done via
+```sql
+SELECT balance FROM accounts WHERE id = $1 FOR UPDATE;
+```
+
+So we add a new FOR UPDATE query; to get account details for an ID. And run `sqlc generate` again.
+
+But using FOR UPDATE is not the correct solution; this will result in a deadlock.
+
+To debug this issue we can pass a transaction name to `TransferTx` method via the context.
+
+```go
+// Transaction key
+var txKey = struct{}{}
+
+// Create transaction name
+txName := fmt.Sprintf("tx %d", i+1)
+// Create context with that transaction name
+ctx := context.WithValue(context.Background(), txKey, txName)
+result, err := store.TransferTx(ctx, TransferTxParams{
+    FromAccountID: account1.ID,
+    ToAccountID:   account2.ID,
+    Amount:        amount,
+})
+```
+
+Now this transaction key can be accessed in the function definition of `TransferTx`.
+```go
+store.execTx(ctx, func(q *Queries) error {
+    var err error
+    txName := ctx.Value(txKey)
+
+    fmt.Println(txName, "create transfer")
+})
+```
+
+Now we can find the actual root cause
+```bash
+tx 4 get account 1 for update
+tx 5 get account 1 for update
+tx 2 get account 1 for update
+tx 3 get account 1 for update
+```
+
+In order to fix the deadlock use `FOR NO KEY UPDATE` on SELECT account.
