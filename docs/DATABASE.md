@@ -308,4 +308,34 @@ tx 2 get account 1 for update
 tx 3 get account 1 for update
 ```
 
+**NOTE**: This happens because of a foreign key constraint: the entry or transfer table must verify that the referenced account row exists before proceeding. To perform this check, the transaction inserting into the child table tries to acquire a lock on the corresponding row in the accounts table. If another transaction is already holding a conflicting lock on that accounts row (e.g., due to an update or select...for update), this can result in a deadlock.
+
+## Fixing Deadlock
+
 In order to fix the deadlock use `FOR NO KEY UPDATE` on SELECT account.
+
+When you do a SELECT ... FOR UPDATE in Postgres, you’re saying:
+> "Give me an exclusive lock on this row — no one else can touch it for updates or FK checks unless they wait."
+
+This lock blocks:
+- Other SELECT ... FOR UPDATE
+- Foreign key insert checks (which need to lock the parent row to ensure referential integrity)
+
+Now enter: FOR NO KEY UPDATE — it's a weaker lock. It:
+- Still prevents updates to the row's data
+- But does not block foreign key checks that don’t plan to change the row’s primary/unique key
+
+
+## Combining SELECT and UPDATE query
+
+We can combine two queries to get account and update
+
+```sql
+-- name: AddAccountBalance :one
+UPDATE accounts
+SET balance = balance + sqlc.arg(amount)
+WHERE id = sqlc.arg(id)
+RETURNING *;
+```
+
+> `sqlc.arg(amount)` will let use pass the amount param instead of balance which is a little misleading 
