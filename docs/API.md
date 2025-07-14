@@ -151,3 +151,11 @@ func main() {
 	}
 }
 ```
+
+NOTE: The get all sqlc function returns null if not records are found.
+
+So we need to configure the sqlc.yml by adding the following config property
+
+```yaml
+emit_empty_slices: true
+```
