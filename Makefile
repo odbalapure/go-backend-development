@@ -22,5 +22,8 @@ sqlc:
 test:
 	go test -v -cover ./...
 
+server:
+	go run main.go
+
 # Tells make that these are not file names
-.PHONY: createdb dropdb remove migrateup migratedown sqlc test
+.PHONY: createdb dropdb remove migrateup migratedown sqlc test server
