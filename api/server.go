@@ -8,13 +8,13 @@ import (
 
 // Server servers HTTP requests
 type Server struct {
-	store *db.Store
+	store db.Store
 	// Router will send each API request to correct handler
 	router *gin.Engine
 }
 
 // Creates a new HTTP server and setup routing
-func NewServer(store *db.Store) *Server {
+func NewServer(store db.Store) *Server {
 	// Create server
 	server := &Server{store: store}
 	// Create router

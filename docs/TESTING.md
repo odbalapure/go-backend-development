@@ -98,3 +98,76 @@ coverage: 6.5% of statements
 ok      simple-bank/db/sqlc     0.701s  coverage: 6.5% of statements
         simple-bank/util                coverage: 0.0% of statements
 ```
+
+## Mocking DB
+
+Why need to mock the database?
+- Independent tests: isolates test data to avoid conflicts
+- Faster tests: reduce talking to a database
+- 100% coverage: Easily setup edge cases or unexpected error like connection error
+
+> Is it good enough to test the API with mock DB. Yes, if the real DB has integration tests.
+
+How to mock?
+- Use fake DB; store data in-memory
+- Use DB stubs; Go Mock that generate and build stubs that returns hard-coded values
+
+Install a golang mock
+```go
+go get github.com/golang/mock/mockgen@v1.6.0
+```
+
+The mockgen file will be present under ~/go/bin
+
+```sh
+ombalapure@Oms-MacBook-Air simple-bank % ls -l ~/go/bin 
+total 122280
+-rwxr-xr-x@ 1 ombalapure  staff  37816306 Jul  6 14:40 gopls
+-rwxr-xr-x@ 1 ombalapure  staff  10091442 Jul 15 09:17 mockgen
+```
+
+## Creating Store interface
+
+Since the `NewServer` takes db store object connects to the real DB. We need to replace that object with an interface.
+
+We can create an interface ourselves but its time consuming, we can get one from `sqlc` by adding `emit_interface: true` in the sqlc.yaml file.
+
+This generates a querier.go file with Querier interface.
+
+```go
+type Querier interface {
+	AddAccountBalance(ctx context.Context, arg AddAccountBalanceParams) (Account, error)
+	CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error)
+	CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error)
+	CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error)
+	DeleteAccount(ctx context.Context, id int64) error
+	GetAccount(ctx context.Context, id int64) (Account, error)
+	GetAccountForUpdate(ctx context.Context, id int64) (Account, error)
+	GetEntry(ctx context.Context, id int64) (Entry, error)
+	GetTransfer(ctx context.Context, id int64) (Transfer, error)
+	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]Account, error)
+	ListEntries(ctx context.Context, arg ListEntriesParams) ([]Entry, error)
+	ListTransfers(ctx context.Context, arg ListTransfersParams) ([]Transfer, error)
+	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (Account, error)
+}
+```
+
+Now we can make Store as interface.
+
+```go
+type Store interface {
+	Querier
+	TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error)
+}
+```
+
+Interfaces are already references so we cannot use `*Store` as the return type.
+
+```go
+func NewStore(db *sql.DB) Store {
+	return &SQLStore{
+		Queries: New(db),
+		db:      db,
+	}
+}
+```
