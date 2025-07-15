@@ -171,3 +171,39 @@ func NewStore(db *sql.DB) Store {
 	}
 }
 ```
+
+## Writing mock tests
+
+Create a `mock` folder under the `db` folder.
+
+```sh
+ombalapure@Oms-MacBook-Air simple-bank % mockgen -help
+mockgen has two modes of operation: source and reflect.
+
+Source mode generates mock interfaces from a source file.
+It is enabled by using the -source flag. Other flags that
+may be useful in this mode are -imports and -aux_files.
+Example:
+        mockgen -source=foo.go [other options]
+
+Reflect mode generates mock interfaces by building a program
+that uses reflection to understand interfaces. It is enabled
+by passing two non-flag arguments: an import path, and a
+comma-separated list of symbols.
+Example:
+        mockgen database/sql/driver Conn,Driver
+```
+
+Create the Store mock using
+
+```sh
+mockgen -package mockdb -destination db/mocks/store.go simple-bank/db/sqlc Store
+```
+
+- `-package` sets the name of the package as mockdb
+- `-destination` specifies where the mocks need to be created
+- `simple-bank/db/sqlc` tells where the Store interace is
+- `Store` is the name of the interface itself
+
+> This will generate a `store.go` under `db/mocks`.
+
