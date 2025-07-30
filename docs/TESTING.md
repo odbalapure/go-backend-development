@@ -197,13 +197,12 @@ Example:
 Create the Store mock using
 
 ```sh
-mockgen -package mockdb -destination db/mocks/store.go simple-bank/db/sqlc Store
+mockgen -package mockdb -destination db/mock/store.go simple-bank/db/sqlc Store
 ```
 
 - `-package` sets the name of the package as mockdb
-- `-destination` specifies where the mocks need to be created
+- `-destination` specifies where the mock need to be created
 - `simple-bank/db/sqlc` tells where the Store interace is
 - `Store` is the name of the interface itself
 
-> This will generate a `store.go` under `db/mocks`.
-
+> This will generate a `store.go` under `db/mock`.

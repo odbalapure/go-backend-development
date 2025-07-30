@@ -26,7 +26,7 @@ server:
 	go run main.go
 
 mockgen:
-	mockgen -package mockdb -destination db/mocks/store.go simple-bank/db/sqlc Store
+	mockgen -package mockdb -destination db/mock/store.go simple-bank/db/sqlc Store
 
 # Tells make that these are not file names
 .PHONY: createdb dropdb remove migrateup migratedown sqlc test server
