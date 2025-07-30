@@ -159,3 +159,52 @@ So we need to configure the sqlc.yml by adding the following config property
 ```yaml
 emit_empty_slices: true
 ```
+
+## Create custom validator
+
+We can create a custom validator for the input currency.
+
+Create a file named `validator.go` and a util function that compares the input currency with the constants we declared.
+
+```go
+package api
+
+import (
+	"simple-bank/util"
+
+	"github.com/go-playground/validator/v10"
+)
+
+var validCurrency validator.Func = func(fieldLevel validator.FieldLevel) bool {
+	if currency, ok := fieldLevel.Field().Interface().(string); ok {
+		// check if currency is supported
+		util.IsSupportedCurrency(currency)
+	}
+	return false
+}
+```
+
+Now register the validator with Gin
+
+```go
+import (
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
+)
+
+func NewServer(store db.Store) *Server {
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("currency", validCurrency)
+	}
+}
+```
+
+Also, update the binding in the request body type
+
+```go
+type createAccountRequest struct {
+	Currency string `json:"currency" binding:"required,currency"`
+}
+```
+
+> Replace `currency` with `oneof="USD INR CAD"`

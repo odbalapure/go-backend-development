@@ -206,3 +206,44 @@ mockgen -package mockdb -destination db/mock/store.go simple-bank/db/sqlc Store
 - `Store` is the name of the interface itself
 
 > This will generate a `store.go` under `db/mock`.
+
+### Adding coverage for get account controller
+
+```go
+func TestGetAccountAPI(t *testing.T) {
+	account := randomAccount()
+
+	// Create a mock controller to manage mock expectations
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create a mock database store
+	store := mockdb.NewMockStore(ctrl)
+	store.
+		EXPECT().
+		GetAccount(gomock.Any(), gomock.Eq(account.ID)).
+		Times(1).
+		Return(account, nil)
+
+	// Create server instance with mock store dependency
+	server := NewServer(store)
+
+	// Create response recorder to capture HTTP response
+	recorder := httptest.NewRecorder()
+
+	// Build request URL with account ID
+	url := fmt.Sprintf("/accounts/%d", account.ID)
+	// Create HTTP GET request
+	request, err := http.NewRequest(http.MethodGet, url, nil)
+
+	require.NoError(t, err)
+	server.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusOK, recorder.Code)
+	// Verify response body matches expected account data
+	requireBodyMatchAccount(t, recorder.Body, account)
+}
+```
+
+We can create a test table to cover all possible scenarios in a single function. Please refer [account_test.go file](../api/account_test.go).
+
+NOTE: Gin runs the tests with **Debug** mode; we need configure it with to run with **Test** mode.
