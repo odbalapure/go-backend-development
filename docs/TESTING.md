@@ -247,3 +247,22 @@ func TestGetAccountAPI(t *testing.T) {
 We can create a test table to cover all possible scenarios in a single function. Please refer [account_test.go file](../api/account_test.go).
 
 NOTE: Gin runs the tests with **Debug** mode; we need configure it with to run with **Test** mode.
+
+## Fixing test case after V2 DB migration
+
+### Fixing integration tests
+
+The integration/db tests will fail because the foreign key constraints are not met.
+```sh
+pq: insert or update on table "accounts" violates foreign key constraint "accounts_owner_fkey"
+```
+
+> So we first create a user and then an account in our tests to fix this test error
+
+### Fixing controller/handler tests
+
+Run the mockgen command to implement the user methods
+
+```sh
+mockgen -package mockdb -destination db/mock/store.go simple-bank/db/sqlc Store
+```

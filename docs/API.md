@@ -208,3 +208,20 @@ type createAccountRequest struct {
 ```
 
 > Replace `currency` with `oneof="USD INR CAD"`
+
+## Handling DB errors
+
+DB errors can be checked using `github.com/lib/pq`. We can send proper status code based on the DB error.
+
+```go
+account, err := server.store.CreateAccount(ctx, arg)
+if err != nil {
+	if pgErr, ok := err.(*pq.Error); ok {
+		switch pgErr.Code.Name() {
+		case "foreign_key_violation", "unique_violation":
+			ctx.JSON(http.StatusForbidden, errorResponse(err))
+			return
+		}
+	}
+}
+```

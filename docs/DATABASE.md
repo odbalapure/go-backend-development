@@ -496,3 +496,35 @@ migrate -path db/migration -database "postgres://root:secret@localhost:5432/simp
 ```
 
 The `down` command is similar; just change keyword `up` to `down`.
+
+## Handle DB errors in Go
+
+Create a `users.sql` file under `db/query`.
+
+```sql
+-- name: CreateUser :one
+INSERT INTO users (
+  username,
+  hashed_password,
+  full_name,
+  email
+) VALUES (
+  $1, $2, $3, $4
+)
+RETURNING *;
+
+-- name: GetUser :one
+SELECT * FROM users
+WHERE username = $1 LIMIT 1;
+```
+
+Now run `sqlc generate`; this will generate a `users.sql.go` file with all DB CRUD fucntions.
+
+This will create 2 new methods in the `Querier` interface
+
+```go
+CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+GetUser(ctx context.Context, username string) (User, error)
+```
+
+> You need to implement these 2 methods to fix the error in the `account_test.go` file as `mockdb.MockStore` does not implement all the methods.
