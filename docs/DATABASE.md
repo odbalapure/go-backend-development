@@ -3,15 +3,25 @@
 We are using a tool called as [dbdiagram](https://dbdiagram.io/d/686eb1aff413ba35081ad5e9) to generate the schema relation and the SQL commands.
 
 ```sql
+Table users as U {
+  username varchar [pk]
+  hashed_password varchar [not null]
+  full_name varchar [not null]
+  email varchar [unique, not null]
+  password_changed_at timestamptz [not null, default: '0001-01-01 00:00:00Z']
+  created_at timestamptz [not null, default: `now()`]
+}
+
 Table account as A {
     id bigserial [pk]
-    owner varchar [not null]
+    owner varchar [ref: > U.username, not null]
     balance bigint [not null]
     currency varchar [not null]
     created_at timestamptz [not null, default: `now()`]
 
     Indexes {
-        owner
+      owner
+      (owner, currency) [unique]
     }
 }
 
@@ -410,3 +420,79 @@ if arg.FromAccountID < arg.ToAccountID {
 ```
 
 The logic can be de-duplicated by moving it to a method.
+
+## User tables
+
+Update the DBML; create a `users` table that references the `accounts` table. This will be a 1:N relation.
+
+```sql
+Table users as U {
+  username varchar [pk]
+  hashed_password varchar [not null]
+  full_name varchar [not null]
+  email varchar [unique, not null]
+  password_changed_at timestamptz [not null, default: '0001-01-01 00:00:00Z']
+  created_at timestamptz [not null, default: `now()`]
+}
+
+Table account as A {
+    id bigserial [pk]
+    owner varchar [ref: > U.username, not null]
+    balance bigint [not null]
+    currency varchar [not null]
+    created_at timestamptz [not null, default: `now()`]
+
+    Indexes {
+      owner
+      (owner, currency) [unique]
+    }
+}
+```
+
+### Applying new schema
+
+Create migration files using
+
+> migrate create -ext sql -dir db/migration -seq add_users
+
+Now add the following to the 
+
+```sql
+CREATE TABLE "users" (
+  "username" varchar PRIMARY KEY,
+  "hashed_password" varchar NOT NULL,
+  "full_name" varchar NOT NULL,
+  "email" varchar UNIQUE NOT NULL,
+  "password_changed_at" timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z',
+  "created_at" timestamptz NOT NULL DEFAULT (now())
+);
+
+ALTER TABLE "accounts" ADD FOREIGN KEY ("owner") REFERENCES "users" ("username");
+
+-- CREATE UNIQUE INDEX ON "accounts" ("owner", "currency");
+-- Another way to create a unique composite index constraint for a specific currency
+ALTER TABLE "accounts" ADD CONSTRAINT "owner_currency_key" UNIQUE ("owner", "currency");
+```
+
+Running `make migrateup` will fail due to violation of foreign key constraint. Because there are existing rows with accounts table with random currency, and that account is linked to an existing user.
+
+The schema_migrations table looks like this
+```sql
+| version | dirty |
+-------------------
+| 2       | true  |
+```
+
+Most migration tools maintain this table that and sets dirty=true to signal the migration didn't finish cleanly.
+
+> Schema migrations are blocked until you fix it.
+
+So set the value as false and save it. Now migrate down the schema and migrate up again.
+
+Use the following command to migrate up the version by `1`
+
+```sh
+migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
+```
+
+The `down` command is similar; just change keyword `up` to `down`.

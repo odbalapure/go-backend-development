@@ -13,8 +13,14 @@ remove:
 migrateup:
 	migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
+migrateup1:
+	migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up 1
+
 migratedown:
 	migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+
+migratedown1:
+	migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down 1
 
 sqlc:
 	sqlc generate
@@ -29,4 +35,4 @@ mockgen:
 	mockgen -package mockdb -destination db/mock/store.go simple-bank/db/sqlc Store
 
 # Tells make that these are not file names
-.PHONY: createdb dropdb remove migrateup migratedown sqlc test server
+.PHONY: createdb dropdb remove migrateup migratedown sqlc test server migrateup1 migratedown1
