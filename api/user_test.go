@@ -102,7 +102,7 @@ func TestCreateUserAPI(t *testing.T) {
 			},
 		},
 		{
-			name: "DuplicateUsername",
+			name: "DatabaseConnectionError",
 			body: gin.H{
 				"username":  user.Username,
 				"password":  password,
@@ -116,7 +116,7 @@ func TestCreateUserAPI(t *testing.T) {
 					Return(db.User{}, sql.ErrConnDone)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
-				require.Equal(t, http.StatusForbidden, recorder.Code)
+				require.Equal(t, http.StatusInternalServerError, recorder.Code)
 			},
 		},
 		{
