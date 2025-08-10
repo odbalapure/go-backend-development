@@ -70,3 +70,38 @@ maker := &JWTMaker{secretKey}
 ```
 
 Since, this is a Maker interface; we need to implement the `CreateToken` and `VerifyToken` methods.
+
+## Using PASETO
+
+Install paseto using
+
+```go
+github.com/o1egl/paseto
+```
+
+> PasetoV2 uses `ChaCha20-Poly1305` algorithm to encrypt paylaod
+
+The implementation will be similar to jwt_maker. Create a [paseto_maker.go](../token/paseto_maker.go)
+
+We create a `PasetoMaker` interace
+
+```go
+type PasetoMaker struct {
+	paseto       *paseto.V2
+	symmetricKey []byte
+}
+```
+
+The `NewPasetoMaker` will take secret key; which is of fixed 32 bytes.
+
+And now implement the `CreateToken` and `VerifyToken` methods.
+
+Everything is handled by PASETO internall so we only need to call the Encrypt and Decrypt methods.
+
+```go
+// Encrypt the payload
+maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
+
+// Decrypt the payload
+maker.paseto.Decrypt(token, maker.symmetricKey, payload, nil)
+```
