@@ -266,3 +266,34 @@ Run the mockgen command to implement the user methods
 ```sh
 mockgen -package mockdb -destination db/mock/store.go simple-bank/db/sqlc Store
 ```
+
+## Adding config object
+
+Since the [NewServer](../api/server.go) function now takes in a config object, we need to update the NewServer being used in the tests.
+
+```go
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	// ...
+	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+	// ...
+}
+```
+
+Create a new function, as a wrapper over the NewServer.
+
+```go
+func newTestServer(t *testing.T, store db.Store) *Server {
+	config := util.Config{
+		TokenSymmetricKey:   util.RandomString(32),
+		AccessTokenDuration: time.Minute,
+	}
+
+	server, err := NewServer(config, store)
+	require.NoError(t, err)
+
+	return server
+}
+```

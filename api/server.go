@@ -1,7 +1,10 @@
 package api
 
 import (
+	"fmt"
 	db "simple-bank/db/sqlc"
+	"simple-bank/token"
+	"simple-bank/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -10,24 +13,39 @@ import (
 
 // Server servers HTTP requests
 type Server struct {
-	store db.Store
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
 	// Router will send each API request to correct handler
 	router *gin.Engine
 }
 
 // Creates a new HTTP server and setup routing
-func NewServer(store db.Store) *Server {
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	// We can choose from JWT or Paseto that implement the same Maker interface
+	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+
 	// Create server
-	server := &Server{store: store}
-	// Create router
-	router := gin.Default()
+	server := &Server{store: store, tokenMaker: tokenMaker}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		v.RegisterValidation("currency", validCurrency)
 	}
 
+	server.setupRouter()
+
+	return server, nil
+}
+
+func (server *Server) setupRouter() {
+	router := gin.Default()
 	// Create user
 	router.POST("/users", server.createUser)
+	// Login
+	router.POST("/users/login", server.loginUser)
 	// Create account
 	router.POST("/accounts", server.createAccount)
 	// Get an account
@@ -38,7 +56,6 @@ func NewServer(store db.Store) *Server {
 	router.POST("/transfers", server.createTransfer)
 
 	server.router = router
-	return server
 }
 
 func (server *Server) Start(address string) error {

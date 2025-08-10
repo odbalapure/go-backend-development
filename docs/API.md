@@ -225,3 +225,57 @@ if err != nil {
 	}
 }
 ```
+
+## Using JWT
+
+We now add the tokenMaker to the `Server` struct
+
+
+```go
+type Server struct {
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+	router *gin.Engine
+}
+
+func NewServer(config util.Config, store db.Store) (*Server, error) {
+	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
+	}
+
+	server := &Server{store: store, tokenMaker: tokenMaker}
+
+	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {
+		v.RegisterValidation("currency", validCurrency)
+	}
+
+	server.setupRouter()
+
+	return server, nil
+}
+```
+
+Since we are implementing the Maker interface, switching b/w the auth mechanism is easy.
+
+```go
+tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+// OR
+tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
+```
+
+Its better to use PASETO v2 local for better security.
+
+
+| Feature | JWT | PASETO v2.local |
+|---------|-----|-----------------|
+| **Payload Encoding** | Base64URL encoded, NOT encrypted | Encrypted AND encoded |
+| **Payload Visibility** | Human-readable without secret key | Completely hidden without secret key |
+| **Claims Access** | Anyone can decode and read claims | Cannot read claims without secret key |
+| **Secret Key Usage** | Only for signature verification | For both encryption and authentication |
+| **Security Level** | Medium - payload is exposed | High - payload is encrypted |
+| **Use Case** | Public information, less sensitive data | Sensitive data, server-to-server |
+| **Token Format** | `header.payload.signature` | `v2.local.encrypted_payload.footer` |
+
+**Note**: This application uses PASETO v2.local for enhanced security, ensuring that sensitive user information in tokens remains confidential.
