@@ -140,3 +140,73 @@ authRoutes.GET("/accounts", server.getAccounts)
 // Transfer
 authRoutes.POST("/transfers", server.createTransfer)
 ```
+
+## Updating the controllers
+
+After the authenticate takes place; only authorized users are allowed to create, get, list account or transfer money.
+
+The auth payload should we parsed and used to perform these actions.
+
+### Create account
+
+Account can only be created by an authorised user. Extract the payload using the Gin context key.
+
+> The authorizationPayloadKey is basically `authorization_payload`
+
+```go
+authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+arg := db.CreateAccountParams{
+	Owner:    authPayload.Username,
+	Balance:  0,
+	Currency: req.Currency,
+}
+```
+
+### Get an account
+
+The account details should belong to the user who created it.
+
+```go
+authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+if account.Owner != authPayload.Username {
+	err := errors.New("account doesn't belong to the authenticated user")
+	ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	return
+}
+```
+
+### List accounts
+
+Listing the account requires SQL query change. The listing should happen using an identifer; this case its the `owner`.
+
+```sql
+SELECT * FROM accounts WHERE owner = $1 ORDER BY id LIMIT $2 OFFSET $3;
+```
+
+Now run `make sqlc` to update the CRUD function for List Account. And `make mockgen` to update the mock controller.
+
+NOTE: The test for list account needs to be updated as well.
+
+### Transfer money
+
+The from account holder details needs to be extracted from the payload.
+
+```go
+fromAccount, valid := server.validAccount(ctx, req.FromAccountID, req.Currency)
+if !valid {
+	return
+}
+
+authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+if fromAccount.Owner != authPayload.Username {
+	err := errors.New("from account doesn't belong to the authenticated user")
+	ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+	return
+}
+
+_, valid = server.validAccount(ctx, req.ToAccountID, req.Currency)
+if !valid {
+	return
+}
+```

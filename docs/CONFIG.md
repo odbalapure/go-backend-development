@@ -38,7 +38,7 @@ type Config struct {
 func LoadConfig(path string) (config Config, err error) {
 	viper.AddConfigPath(path)
 	viper.SetConfigName("app")
-	viper.SetConfigType(("env")) // json, xml, toml
+	viper.SetConfigType("env") // json, xml, toml
 
 	// Load and overrid config values if found
 	viper.AutomaticEnv()

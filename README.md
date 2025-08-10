@@ -1,4 +1,4 @@
-## Simple Bank Application
+## Go backend development
 
 Table of content:
 - [Database Design](docs/DATABASE.md)
