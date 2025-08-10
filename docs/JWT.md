@@ -105,3 +105,38 @@ maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
 // Decrypt the payload
 maker.paseto.Decrypt(token, maker.symmetricKey, payload, nil)
 ```
+
+## Auth Middleware
+
+Create a autMiddleware function under [middleware.go](../api/middleware.go). This will check for authorization header format and decode the token.
+
+Inside the function we call the `tokenMaker.VerifyToken` method. 
+
+```go
+accessToken := fields[1]
+payload, err := tokenMaker.VerifyToken(accessToken)
+if err != nil {
+	ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
+	return
+}
+
+ctx.Set(authorizationPayloadKey, payload)
+ctx.Next()
+```
+
+> This `gin.HandlerFunc` is not of type `http.HandlerFunc`.
+
+Now apply this middleware we need to use `router.Group` to use the middleware function on common set of routes.
+
+```go
+authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
+
+// Create account
+authRoutes.POST("/accounts", server.createAccount)
+// Get an account
+authRoutes.GET("/accounts/:id", server.getAccount)
+// Get accounts
+authRoutes.GET("/accounts", server.getAccounts)
+// Transfer
+authRoutes.POST("/transfers", server.createTransfer)
+```

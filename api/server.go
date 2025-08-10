@@ -46,14 +46,17 @@ func (server *Server) setupRouter() {
 	router.POST("/users", server.createUser)
 	// Login
 	router.POST("/users/login", server.loginUser)
+
+	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
+
 	// Create account
-	router.POST("/accounts", server.createAccount)
+	authRoutes.POST("/accounts", server.createAccount)
 	// Get an account
-	router.GET("/accounts/:id", server.getAccount)
+	authRoutes.GET("/accounts/:id", server.getAccount)
 	// Get accounts
-	router.GET("/accounts", server.getAccounts)
+	authRoutes.GET("/accounts", server.getAccounts)
 	// Transfer
-	router.POST("/transfers", server.createTransfer)
+	authRoutes.POST("/transfers", server.createTransfer)
 
 	server.router = router
 }
