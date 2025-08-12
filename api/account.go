@@ -62,8 +62,13 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
+	// Add debug logging
+	fmt.Printf("Requesting account ID: %d\n", req.ID)
+
 	account, err := server.store.GetAccount(ctx, req.ID)
-	fmt.Println("ID", req.ID)
+	fmt.Printf("Account found: %+v\n", account)
+	fmt.Printf("Error: %v\n", err)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
@@ -74,8 +79,10 @@ func (server *Server) getAccount(ctx *gin.Context) {
 		return
 	}
 
-	// TOD: Fix
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+	fmt.Printf("Authenticated user: %s\n", authPayload.Username)
+	fmt.Printf("Account owner: %s\n", account.Owner)
+
 	if account.Owner != authPayload.Username {
 		err := errors.New("account doesn't belong to the authenticated user")
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))

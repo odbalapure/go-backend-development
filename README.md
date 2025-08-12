@@ -5,3 +5,4 @@ Table of content:
 - [Testing Guide](docs/TESTING.md)
 - [CI/CD Pipeline](docs/CI.md)
 - [API Development](docs/API.md)
+- [Docker](docs/DOCKER.md)
