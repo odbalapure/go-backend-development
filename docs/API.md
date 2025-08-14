@@ -277,5 +277,3 @@ Its better to use PASETO v2 local for better security.
 | **Security Level** | Medium - payload is exposed | High - payload is encrypted |
 | **Use Case** | Public information, less sensitive data | Sensitive data, server-to-server |
 | **Token Format** | `header.payload.signature` | `v2.local.encrypted_payload.footer` |
-
-**Note**: This application uses PASETO v2.local for enhanced security, ensuring that sensitive user information in tokens remains confidential.

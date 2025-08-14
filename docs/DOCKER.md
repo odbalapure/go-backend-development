@@ -245,3 +245,54 @@ curl --location 'http://localhost:8080/users/login' \
     "password": "secret"
 }'
 ```
+
+## Docker Compose
+
+Docker compose lets us launch all our services at once on a single network.
+
+```Dockerfile
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+      - POSTGRES_DB=simple_bank
+    ports:
+      - 5432:5432
+  
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      - DB_SOURCE=postgres://root:secret@postgres:5432/simple_bank?sslmode=disable
+```
+
+- `build` means that this is a custom image unlike postgres:12-alpine; and the `.` means current directory.
+- All services in the Docker compose will run on the same network they can commnuicate with each other via name. Hence DB_SOURCE=postgres://root:secret@`postgres`:5432/simple_bank?sslmode=disable.
+
+**NOTE**:
+- The image name will `simple-bank-api`, the name of the folder followed by the service name i.e. `api`.
+- The container names will be `postgres-1` and `api-1` under `simple-bank`.
+
+> Looking at the logs carefully you can find a new network being created by the name `simple-bank_default`
+
+
+### Testing the services
+
+For the database to work, download the `golang-migrate`.
+
+```
+RUN apk add curl
+RUN curl -L https://github.com/golang-migrate/migrate/releases/download/v4.18.3/migrate.linux-amd64.tar.gz | tar xvz
+
+depends_on:
+    - postgres
+```
+
+> `depends_on` does not guarantee the database is up, we can use the `wait-for.sh` script.
