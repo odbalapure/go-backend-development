@@ -45,6 +45,8 @@ But to create a user we first need to create a group.
 
 Create a group with the name deployment and the select the `AmazonEC2ContainerRegistryPowerUser` policy. This will give all the access except for deletion.  
 
+> Make sure to add the same permission for the `github-ci` user as well.
+
 ### Github Secrets
 
 Go to Settings > Secrets and select `Repository Secrets`.
