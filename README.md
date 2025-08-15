@@ -6,3 +6,4 @@ Table of content:
 - [CI/CD Pipeline](docs/CI.md)
 - [API Development](docs/API.md)
 - [Docker](docs/DOCKER.md)
+- [AWS](docs/AWS.md)
