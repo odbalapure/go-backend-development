@@ -7,3 +7,4 @@ Table of content:
 - [API Development](docs/API.md)
 - [Docker](docs/DOCKER.md)
 - [AWS](docs/AWS.md)
+- [Session](docs/SESSION.md)
