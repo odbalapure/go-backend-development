@@ -27,10 +27,10 @@ func NewJwtMaker(secretKey string) (Maker, error) {
 }
 
 // Creates token for a specific username and duration
-func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, error) {
+func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (string, *Payload, error) {
 	payload, err := NewPayload(username, duration)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
 	// NOTE: The Payload type must implement the `Valid()` method
@@ -38,7 +38,8 @@ func (maker *JWTMaker) CreateToken(username string, duration time.Duration) (str
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 
 	// `jwtToken.SignedString` signs the token with the secret key in the `JWTMaker` struct
-	return jwtToken.SignedString([]byte(maker.secretKey))
+	token, err := jwtToken.SignedString([]byte(maker.secretKey))
+	return token, payload, nil
 }
 
 // Checks if the token is valid
