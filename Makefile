@@ -35,10 +35,13 @@ mockgen:
 	mockgen -package mockdb -destination db/mock/store.go simple-bank/db/sqlc Store
 
 proto:
-	rm -rf pb/*
+	rm -f pb/*.go
 	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
     --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
     proto/*.proto
 
+evans:
+	evans --host localhost --port 9090 -r repl
+
 # Tells make that these are not file names
-.PHONY: createdb dropdb remove migrateup migratedown sqlc test server migrateup1 migratedown1 proto
+.PHONY: createdb dropdb remove migrateup migratedown sqlc test server migrateup1 migratedown1 proto evans

@@ -124,3 +124,56 @@ protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
 
 > Run `go mod tidy` to add any missing dependencies.
 
+## Running gRPC server
+
+To send requests to this GRPC server, we can use EVANS. This is a GRPC client that allows us to construct and send GRPC requests in an interactive console.
+
+The [NewServer](../gapi/server.go) method will be similar to [Gin's](../api/server.go).
+
+The only difference is the struct `pb.UnimplementedSimpleBankServer`. This is a placeholder for unimplemented service RPCs so that the GRPC server does not `panic`.
+
+```go
+type Server struct {
+	pb.UnimplementedSimpleBankServer
+	config     util.Config
+	store      db.Store
+	tokenMaker token.Maker
+}
+```
+
+Create a function that will start the gRPC server
+
+```go
+func runGrpcServer(config util.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
+	if err != nil {
+		log.Fatal("cannot create server:", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterSimpleBankServer(grpcServer, server)
+	// This allows a gRPC client to explore what RPC are available in the server
+	// Sort of a self documentation for a server
+	reflection.Register(grpcServer)
+
+	listener, err := net.Listen("tcp", config.GRPCServerAddress)
+	if err != nil {
+		log.Fatal("cannot create listener:", err)
+	}
+
+	log.Printf("gRPC server started at %s", listener.Addr().String())
+
+	err = grpcServer.Serve(listener)
+	if err != nil {
+		log.Fatal("cannot start gRPC server:", err)
+	}
+}
+```
+
+The RPCs can be listed using:
+
+```sh
+ombalapure@Oms-MacBook-Air simple-bank % grpcurl -plaintext localhost:9090 list pb.SimpleBank
+pb.SimpleBank.CreateUser
+pb.SimpleBank.LoginUser
+```
