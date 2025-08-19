@@ -126,8 +126,6 @@ protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
 
 ## Running gRPC server
 
-To send requests to this GRPC server, we can use EVANS. This is a GRPC client that allows us to construct and send GRPC requests in an interactive console.
-
 The [NewServer](../gapi/server.go) method will be similar to [Gin's](../api/server.go).
 
 The only difference is the struct `pb.UnimplementedSimpleBankServer`. This is a placeholder for unimplemented service RPCs so that the GRPC server does not `panic`.
@@ -176,4 +174,46 @@ The RPCs can be listed using:
 ombalapure@Oms-MacBook-Air simple-bank % grpcurl -plaintext localhost:9090 list pb.SimpleBank
 pb.SimpleBank.CreateUser
 pb.SimpleBank.LoginUser
+```
+
+## Create a gRPC endpoint
+
+Refer an un-implemented method from [service_simple_bank_grpc.pb.go](../pb/service_simple_bank_grpc.pb.go) for eg: `CreateUser`.
+
+```go
+func (UnimplementedSimpleBankServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+}
+```
+
+This will accept a `Server` struct in its receiver. The logic will same as that of HTTP login user. Only the response will change:
+
+```go
+func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
+	hashedPassword, err := util.HashPassword(req.GetPassword())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to hash password: %v", err)
+	}
+	// ...
+	rsp, nil
+}
+```
+
+Now, test this gRPC endpoint:
+
+```sh
+ombalapure@Oms-MacBook-Air simple-bank % grpcurl -plaintext -d '{
+  "username": "john_doe",
+  "password": "secret123",
+  "email": "john@example.com",
+  "full_name": "John Doe"
+}' localhost:9090 pb.SimpleBank/CreateUser
+{
+  "user": {
+    "username": "john_doe",
+    "fullName": "John Doe",
+    "email": "john@example.com",
+    "passwordChangedAt": "0001-01-01T00:00:00Z",
+    "createdAt": "2025-08-19T00:12:56.917757Z"
+}
 ```
