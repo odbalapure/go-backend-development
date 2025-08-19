@@ -9,6 +9,10 @@ import (
 )
 
 type Server struct {
+	// Default implementations for any methods you don't implement
+	// The `mustEmbedUnimplementedSimpleBankServer()` method that satisfies the interface requirement
+	// If someone adds a new RPC method to your `.proto` file,
+	// Go code will still compile because `pb.UnimplementedSimpleBankServer` provides a default implementation for "new method".
 	pb.UnimplementedSimpleBankServer
 	config     util.Config
 	store      db.Store

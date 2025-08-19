@@ -41,8 +41,8 @@ protoc --version
 ```
 
 We need two more plugins
-- protoc-gen-go (generate golang code defined)
-- protoc-gen-go-grpc (generate golang code that work with gRPC framework)
+- **protoc-gen-go**: Here are the Go structs for your data
+- **protoc-gen-go-grpc**: Here are the Go interfaces for your gRPC service
 
 The quick start page is [here](https://grpc.io/docs/languages/go/quickstart/)
 
@@ -132,11 +132,20 @@ The only difference is the struct `pb.UnimplementedSimpleBankServer`. This is a 
 
 ```go
 type Server struct {
+	// Default implementations for any methods you don't implement
+	// The `mustEmbedUnimplementedSimpleBankServer()` method that satisfies the interface requirement
+	// If someone adds a new RPC method to your `.proto` file,
+	// Go code will still compile because `pb.UnimplementedSimpleBankServer` provides a default implementation for "new method".
 	pb.UnimplementedSimpleBankServer
 	config     util.Config
 	store      db.Store
 	tokenMaker token.Maker
 }
+```
+
+If you don't add it, the gRPC server won't start:
+```sh
+./main.go:41:42: cannot use server (variable of type *gapi.Server) as pb.SimpleBankServer value in argument to pb.RegisterSimpleBankServer: *gapi.Server does not implement pb.SimpleBankServer (missing method mustEmbedUnimplementedSimpleBankServer)
 ```
 
 Create a function that will start the gRPC server
@@ -217,3 +226,27 @@ ombalapure@Oms-MacBook-Air simple-bank % grpcurl -plaintext -d '{
     "createdAt": "2025-08-19T00:12:56.917757Z"
 }
 ```
+
+## protobuf V protoc
+
+**protobuf**
+- This is the data format/serialization protocol itself
+- It's Google's binary data format for serializing structured data
+- Think of it as the "language" or "format" for data exchange
+
+**protoc**
+- This is the compiler tool that processes `.proto` files
+- `protoc` = Protocol buffer Compiler
+- It's the executable that reads your `.proto` files and generates code
+
+Inshort:
+- Protocol Buffers = The specification/format (like JSON or XML)
+- protoc = The compiler (like gcc for C or javac for Java)
+- protoc-gen-* = Plugins that tell the compiler what language to generate
+
+> `protoc` is the tool, and Protocol Buffers is what it processes.
+
+## gRPC Gateway
+
+- A plugin of protobuf compiler
+- Generate proxy codes from protobuf
