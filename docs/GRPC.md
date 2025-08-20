@@ -362,3 +362,39 @@ NOTE: We cannot run both the servers simultaneously so one has to run as a go-ro
 go runGatewayServer(config, store)
 runGrpcServer(config, store)
 ```
+
+## Extracting meta data
+
+The metadata can be extracted from the headers and in some cases the context object of the request.
+
+```go
+func (s *Server) extractMetadata(ctx context.Context) *Metadata {
+	mtd := &Metadata{}
+
+	// NOTE: `md` is a map[string][]string
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		// This check is for the gateway server
+		if userAgents := md.Get(grpcGatewayUserAgentHeader); len(userAgents) > 0 {
+			mtd.UserAgent = userAgents[0]
+		}
+
+		// This check is for the plain GRPC server
+		if userAgents := md.Get(userAgentHeader); len(userAgents) > 0 {
+			mtd.UserAgent = userAgents[0]
+		}
+
+		// This check is for the gateway server
+		if clients := md.Get(xForwardedForHeader); len(clients) > 0 {
+			mtd.ClientIp = clients[0]
+		}
+	}
+
+	// This check is for the plain GRPC server
+	// NOTE: The IPAddress is stored in the context object of the request  not in the metadata
+	if p, ok := peer.FromContext(ctx); ok {
+		mtd.ClientIp = p.Addr.String()
+	}
+
+	return mtd
+}
+```

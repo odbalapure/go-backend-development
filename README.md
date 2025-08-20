@@ -8,3 +8,4 @@ Table of content:
 - [Docker](docs/DOCKER.md)
 - [AWS](docs/AWS.md)
 - [Session](docs/SESSION.md)
+- [gRPC](docs/GRPC.md)
