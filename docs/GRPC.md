@@ -248,5 +248,117 @@ Inshort:
 
 ## gRPC Gateway
 
-- A plugin of protobuf compiler
-- Generate proxy codes from protobuf
+### Required plugins
+
+To create a gateway server that translates your HTTP calls to gRPC calls. We need these:
+
+- "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
+- "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
+- "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
+- "google.golang.org/protobuf/cmd/protoc-gen-go"
+
+Then clone the [googleapis](https://github.com/googleapis/googleapis) repo. Copy these four files from `googleapis/google/api/*`
+- annotations.proto
+- field_behavior.proto
+- http.proto
+- httpbody.proto
+
+### Updating the service proto file
+
+Now update the `proto/service_simple_bank.proto` file.
+
+```proto
+import "google/api/annotations.proto";
+
+option go_package = "simple-bank/pb";
+
+service SimpleBank {
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+        option (google.api.http) = {
+            post: "/v1/create_user"
+            body: "*"
+        };
+    }
+    rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
+        option (google.api.http) = {
+            post: "/v1/login_user"
+            body: "*"
+        };
+    }
+}
+```
+
+This import will let use define options for our gateway server.
+
+### Config
+
+Now update the proto command
+
+```sh
+proto:
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+    --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+	# To generate `service_simple_bank.pb.gw.go` gateway file
+    --grpc-gateway_out=pb --grpc-gateway_opt=paths=source_relative \
+    proto/*.proto
+```
+
+### Updating the main.go point 
+
+The make command will generate a gateway file `service_simple_bank.pb.gw.go` under `pb` folder. We need `RegisterSimpleBankHandlerServer` function to setup the gateway server.
+
+```go
+import (
+	"net/http"
+	"context"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/protobuf/encoding/protojson"
+)
+
+func runGatewayServer(config util.Config, store db.Store) {
+	server, err := gapi.NewServer(config, store)
+	if err != nil {
+		log.Fatal("cannot create server:", err)
+	}
+
+	grpcMux := runtime.NewServeMux(
+		// Convert camel case response to snake case
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{
+			MarshalOptions: protojson.MarshalOptions{
+				UseProtoNames: true,
+			},
+			UnmarshalOptions: protojson.UnmarshalOptions{
+				DiscardUnknown: true,
+			},
+		}),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err = pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
+	if err != nil {
+		log.Fatal("cannot register http -> grpc gateway handler:", err)
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle("/", grpcMux)
+
+	listener, err := net.Listen("tcp", config.HTTPServerAddress)
+	if err != nil {
+		log.Fatal("cannot create http -> grpc gateway listener:", err)
+	}
+
+	err = http.Serve(listener, mux)
+	if err != nil {
+		log.Fatal("cannot start http -> grpc gateway server:", err)
+	}
+}
+```
+
+NOTE: We cannot run both the servers simultaneously so one has to run as a go-routine:
+```go
+go runGatewayServer(config, store)
+runGrpcServer(config, store)
+```
