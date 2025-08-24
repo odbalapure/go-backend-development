@@ -2,7 +2,9 @@
 
 ### Swagger generation
 
-We are trying to generate swagger doc for our gRCP gateway with minimal dependencies. Clone this repository:
+We are trying to generate swagger doc for our gRCP gateway with minimal dependencies.
+
+Instead of installing the dependencies we can utilize the source from the `grpc-ecosystem` repositories.
 
 ```sh
 https://github.com/grpc-ecosystem/grpc-gateway
@@ -37,14 +39,13 @@ option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
 
 Copy the **proto** files under [options](https://github.com/grpc-ecosystem/grpc-gateway/tree/main/protoc-gen-openapiv2/options) folder and paste them under our projects' `proto/protoc-gen-openapiv2/options`.
 
-**NOTE**: You don't the same folder/path structure. This is just for clarity and keeping things similar to the original source code.
+You don't need the same folder/path structure. This is just for clarity and keeping things similar to the original source code.
 
 ## Auto generate docs
 
-We have to run the `make proto` command every time to generate a new swagger doc. We can install a swagger react plugin to do the same.
+Copy the contents of the `dist` folder from the [dist](https://github.com/swagger-api/swagger-ui/tree/master/dist) to our `doc/swagger` folder.
 
-But to keep things minimal just copy the contents of the `dist` folder from the [dist](https://github.com/swagger-api/swagger-ui/tree/master/dist) to our `doc/swagger` folder.
-swagger-ui-react
+> We can install `swagger-ui-react` to generate the swagger documentation - but to keep things minimal we just copy the essentials file required to generate it.
 
 ```sh
 cp -r ../swagger-ui/dist/* doc/swagger/
@@ -52,7 +53,7 @@ cp -r ../swagger-ui/dist/* doc/swagger/
 
 Now update the url of the destination file here [init.js](../doc/swagger/swagger-initializer.js) to `simple_bank.swagger.json`.
 
-Now, we need to serve the contents of the swagger folder. For that we need to create an endpoint that will server these static files. 
+We need to serve the contents of the swagger folder. For that we need to create an endpoint that will server these static files. 
 
 Update the main.go `runGatewayServer` function.
 
@@ -63,21 +64,21 @@ mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
 
 ### Embed front end code in the Go binary
 
-If we copy all the FE files into our docker build, will have lot of FE files along side our Go binary.
+If we copy all the FE files into our docker build, we will have lot of FE files along side our Go binary.
 
-Embeds a directory of static files into our _Go binary_ to be later served from an `http.FileSystem`.
+Its better we embeds a directory of static files into our _Go binary_ to be later served from an `http.FileSystem`.
 
-This avoids updating our Dockerfile. And all these files are in the memory of the server not the disk; which is much faster.
+This avoids updating our Dockerfile. And all these files are in the memory of the server not the disk; serving them becomes much faster.
 
 > This apporach makes sense if we the static files are not too large in size and will be browsed by a few people.
 
-We can install a tool called as [statik](https://github.com/rakyll/statik):
+We can install a tool called as [statik](https://github.com/rakyll/statik) to do so:
 
-```go
+```sh
 go get github.com/rakyll/statik@latest
 ```
 
-Now update the make proto command; command generates a `statik.go` file. This file contains binary data, but it's encoded in a specific way that makes it usable in Go
+Now update the make proto command; the command generates a `statik.go` file. This file contains binary data, but it's encoded in a specific way that makes it usable in Go:
 
 ```sh
 statik -src=./doc/swagger -dest=./doc
@@ -85,10 +86,10 @@ statik -src=./doc/swagger -dest=./doc
 
 ### Serving the files from the Go binary
 
-Update the main.go file to server the files from the `doc/statik/statik.go` files.
+Update the main.go file to serve the files from `doc/statik/statik.go`.
 
 ```go
-// This servers static files from the memory of the server not the disk.
+// This serves static files from the memory of the server not the disk.
 // This is much faster than serving from the disk.
 statikFS, err := fs.New()
 if err != nil {
@@ -101,7 +102,7 @@ mux.Handle("/swagger/", swaggerHandler)
 
 ### Testing the change
 
-Now update the service_proto file, this will add the metadata to the file
+Now update the `service_simple_bank.proto` file, this change will add the metadata to the swagger documentation:
 
 ```proto
 service SimpleBank {
@@ -132,4 +133,4 @@ service SimpleBank {
 }
 ```
 
-> We need to run `make proto` and `make server` everything for swagger doc to reflect the changes.
+> We need to run `make proto` and `make server` everytime to see the changes in our swagger documentation.

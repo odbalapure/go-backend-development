@@ -9,3 +9,4 @@ Table of content:
 - [AWS](docs/AWS.md)
 - [Session](docs/SESSION.md)
 - [gRPC](docs/GRPC.md)
+- [Swagger](docs/SWAGGER.md)

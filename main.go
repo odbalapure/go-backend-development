@@ -97,7 +97,7 @@ func runGatewayServer(config util.Config, store db.Store) {
 	// fs := http.FileServer(http.Dir("./doc/swagger"))
 	// mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
 
-	// This servers static files from the memory of the server not the disk.
+	// This serves static files from the memory of the server not the disk.
 	// This is much faster than serving from the disk.
 	statikFS, err := fs.New()
 	if err != nil {

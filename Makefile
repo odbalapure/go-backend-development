@@ -10,6 +10,15 @@ dropdb:
 remove:
 	docker stop postgres12 && docker rm postgres12
 
+up:
+	docker compose up -d
+
+down:
+	docker compose down
+
+restart:
+	make down && make up
+
 migrateup:
 	migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
