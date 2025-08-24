@@ -4,10 +4,31 @@ package pb;
 
 import "rpc_create_user.proto";
 import "rpc_login_user.proto";
-
 import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "simple-bank/pb";
+
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Simple Bank API"
+    version: "1.0"
+    contact: {
+      name: "Personal Project"
+      url: "https://github.com/go-backend-development"
+      email: "none@example.com"
+    }
+    license: {
+      name: "BSD 3-Clause License"
+      url: "https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE"
+    }
+    extensions: {
+      key: "x-something-something"
+      value: {string_value: "yadda"}
+    }
+  }
+};
 
 service SimpleBank {
     rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
