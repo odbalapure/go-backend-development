@@ -65,8 +65,6 @@ type TransferTxResult struct {
 	ToEntry     Entry    `json:"to_entry"`
 }
 
-var txKey = struct{}{}
-
 func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (TransferTxResult, error) {
 	var result TransferTxResult
 
@@ -76,7 +74,7 @@ func (store *SQLStore) TransferTx(ctx context.Context, arg TransferTxParams) (Tr
 		result.Transfer, err = q.CreateTransfer(ctx, CreateTransferParams{
 			FromAccountID: arg.FromAccountID,
 			ToAccountID:   arg.ToAccountID,
-			Amount:        arg.Amount,
+			Amount:        sql.NullInt64{Int64: arg.Amount, Valid: true},
 		})
 		if err != nil {
 			return err

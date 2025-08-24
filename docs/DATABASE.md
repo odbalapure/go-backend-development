@@ -577,3 +577,21 @@ Since are doing migration progrmatically, we need to remove the step that copies
 
 And remove the line from `start.sh` that install the migration tool.
 
+## Partial update
+
+A user can update any one of the columns in a record.
+
+```sql
+-- name: UpdateUser :one
+UPDATE users
+SET
+  hashed_password = COALESCE(sqlc.narg(hashed_password), hashed_password),
+  full_name = COALESCE(sqlc.narg(full_name), full_name),
+  email = COALESCE(sqlc.narg(email), email)
+WHERE username = sqlc.arg(username)
+RETURNING *;
+```
+
+It's designed for scenarios where you only want to update some user information (like password, name, or email) without affecting other fields.
+
+Now run the `make sqlc` and generate the `UpdateUser` function.
