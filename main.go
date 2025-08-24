@@ -13,6 +13,9 @@ import (
 	"simple-bank/pb"
 	"simple-bank/util"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
 	"github.com/rakyll/statik/fs"
@@ -29,6 +32,9 @@ func main() {
 		log.Fatal("cannot connect to db: ", err)
 	}
 
+	// Run DB migration
+	runDBMigration(config.MigrationURL, config.DBSource)
+
 	store := db.NewStore(conn)
 
 	// So config and store are single source of truth being passed to both servers
@@ -36,6 +42,19 @@ func main() {
 	// runGinServer(config, store)
 	go runGatewayServer(config, store)
 	runGrpcServer(config, store)
+}
+
+func runDBMigration(migrationUrl string, dbSource string) {
+	migration, err := migrate.New(migrationUrl, dbSource)
+	if err != nil {
+		log.Fatal("cannot create migration instance:", err)
+	}
+
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to run migration up:", err)
+	}
+
+	log.Println("db migrated successfully")
 }
 
 func runGrpcServer(config util.Config, store db.Store) {

@@ -8,6 +8,7 @@ import (
 )
 
 func TestTransfer(t *testing.T) {
+	requireDB(t)
 	store := NewStore(testDB)
 
 	account1 := createRandomAccount(t)
@@ -112,6 +113,7 @@ func TestTransfer(t *testing.T) {
 }
 
 func TestTransferDeadlock(t *testing.T) {
+	requireDB(t)
 	store := NewStore(testDB)
 
 	account1 := createRandomAccount(t)

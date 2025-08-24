@@ -528,3 +528,52 @@ GetUser(ctx context.Context, username string) (User, error)
 ```
 
 > You need to implement these 2 methods to fix the error in the `account_test.go` file as `mockdb.MockStore` does not implement all the methods.
+
+## Apply migration programatically
+
+Add a new ENV variable `MIGRATION_URL="file://db/migration"`. Most importanly; install the `migrate` tool on the local machine.
+
+```sh
+go get github.com/golang-migrate/migrate/v4
+```
+
+> `migrate` was being installed using the `start.sh` inside the container.
+
+```go
+// main.go
+func runDBMigration(migrationUrl string, dbSource string) {
+	migration, err := migrate.New(migrationUrl, dbSource)
+	if err != nil {
+		log.Fatal("cannot create migration instance:", err)
+	}
+
+	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal("failed to run migration up:", err)
+	}
+
+	log.Println("db migrated successfully")
+}
+
+func main() {
+  // ...
+  runDBMigration(config.MigrationURL, config.DBSource)
+  // ...
+}
+```
+
+We need these imports for the migration to work:
+
+```go
+import (
+  	"github.com/golang-migrate/migrate/v4" // Create the migrate object 
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // Specify the DB driver
+	_ "github.com/golang-migrate/migrate/v4/source/file" // Tells how to read the migraion files from the local filesystem
+)
+```
+
+### Update Dockerfile and start.sh
+
+Since are doing migration progrmatically, we need to remove the step that copies the migration files.
+
+And remove the line from `start.sh` that install the migration tool.
+

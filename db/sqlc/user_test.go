@@ -10,6 +10,8 @@ import (
 )
 
 func createRandomUser(t *testing.T) User {
+	requireDB(t)
+
 	arg := CreateUserParams{
 		Username:       util.RandomOwner(),
 		HashedPassword: "secret",
@@ -34,10 +36,12 @@ func createRandomUser(t *testing.T) User {
 }
 
 func TestCreatUser(t *testing.T) {
+	requireDB(t)
 	createRandomUser(t)
 }
 
 func TestGetUser(t *testing.T) {
+	requireDB(t)
 	user1 := createRandomUser(t)
 	user2, err := testQueries.GetUser(context.Background(), user1.Username)
 
