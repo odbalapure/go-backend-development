@@ -26,15 +26,19 @@ var File_service_simple_bank_proto protoreflect.FileDescriptor
 
 const file_service_simple_bank_proto_rawDesc = "" +
 	"\n" +
-	"\x19service_simple_bank.proto\x12\x02pb\x1a\x15rpc_create_user.proto\x1a\x14rpc_login_user.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xba\x01\n" +
+	"\x19service_simple_bank.proto\x12\x02pb\x1a\x15rpc_create_user.proto\x1a\x14rpc_login_user.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xb8\x02\n" +
 	"\n" +
-	"SimpleBank\x12W\n" +
+	"SimpleBank\x12\xa0\x01\n" +
 	"\n" +
-	"CreateUser\x12\x15.pb.CreateUserRequest\x1a\x16.pb.CreateUserResponse\"\x1a\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/create_user\x12S\n" +
-	"\tLoginUser\x12\x14.pb.LoginUserRequest\x1a\x15.pb.LoginUserResponse\"\x19\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/login_userB\xfa\x01\x92A\xe6\x01\x12\xe3\x01\n" +
+	"CreateUser\x12\x15.pb.CreateUserRequest\x1a\x16.pb.CreateUserResponse\"c\x92AF\n" +
+	"\vcreate_user\x12\x0fCreate new User\x1a&This API creates a new user using gRPC\x82\xd3\xe4\x93\x02\x14:\x01*\"\x0f/v1/create_user\x12\x86\x01\n" +
+	"\tLoginUser\x12\x14.pb.LoginUserRequest\x1a\x15.pb.LoginUserResponse\"L\x92A0\n" +
+	"\n" +
+	"login_user\x12\n" +
+	"Login User\x1a\x16Fuck a user using gRPC\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/login_userB\xfa\x01\x92A\xe6\x01\x12\xe3\x01\n" +
 	"\x0fSimple Bank API\"O\n" +
 	"\x10Personal Project\x12)https://github.com/go-backend-development\x1a\x10none@example.com*X\n" +
-	"\x14BSD 3-Clause License\x12@https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE2\x031.0: \n" +
+	"\x14BSD 3-Clause License\x12@https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE2\x031.1: \n" +
 	"\x15x-something-something\x12\a\x1a\x05yaddaZ\x0esimple-bank/pbb\x06proto3"
 
 var file_service_simple_bank_proto_goTypes = []any{

@@ -60,3 +60,76 @@ Update the main.go `runGatewayServer` function.
 fs := http.FileServer(http.Dir("./doc/swagger"))
 mux.Handle("/swagger/", http.StripPrefix("/swagger/", fs))
 ```
+
+### Embed front end code in the Go binary
+
+If we copy all the FE files into our docker build, will have lot of FE files along side our Go binary.
+
+Embeds a directory of static files into our _Go binary_ to be later served from an `http.FileSystem`.
+
+This avoids updating our Dockerfile. And all these files are in the memory of the server not the disk; which is much faster.
+
+> This apporach makes sense if we the static files are not too large in size and will be browsed by a few people.
+
+We can install a tool called as [statik](https://github.com/rakyll/statik):
+
+```go
+go get github.com/rakyll/statik@latest
+```
+
+Now update the make proto command; command generates a `statik.go` file. This file contains binary data, but it's encoded in a specific way that makes it usable in Go
+
+```sh
+statik -src=./doc/swagger -dest=./doc
+```
+
+### Serving the files from the Go binary
+
+Update the main.go file to server the files from the `doc/statik/statik.go` files.
+
+```go
+// This servers static files from the memory of the server not the disk.
+// This is much faster than serving from the disk.
+statikFS, err := fs.New()
+if err != nil {
+  log.Fatal("cannot create statik file system:", err)
+}
+
+swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+mux.Handle("/swagger/", swaggerHandler)
+```
+
+### Testing the change
+
+Now update the service_proto file, this will add the metadata to the file
+
+```proto
+service SimpleBank {
+    rpc CreateUser(CreateUserRequest) returns (CreateUserResponse) {
+        option (google.api.http) = {
+            post: "/v1/create_user"
+            body: "*"
+        };
+        // Meta data for create user
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+          description: "This API creates a new user using gRPC"
+          summary: "Create new User"
+          tags: "create_user"
+        };
+    }
+    rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
+        option (google.api.http) = {
+            post: "/v1/login_user"
+            body: "*"
+        };
+        // Meta data for login user
+        option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+          description: "This API logs in a user using gRPC"
+          summary: "Login User"
+          tags: "login_user"
+        };
+    }
+}
+```
+
+> We need to run `make proto` and `make server` everything for swagger doc to reflect the changes.
