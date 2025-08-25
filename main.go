@@ -146,7 +146,14 @@ func runGatewayServer(config util.Config, store db.Store) {
 		log.Fatal().Err(err).Msg("cannot create http -> grpc gateway listener")
 	}
 
-	err = http.Serve(listener, mux)
+	// NOTE: This is the original code without the HTTP logger
+	// err = http.Serve(listener, mux)
+
+	// HTTP Logger for the gRPC gateway server
+	// Wrap the `mux` with the logger
+	// This works because `logger` accepts an `http.Handler`
+	handler := gapi.HttpLogger(mux)
+	err = http.Serve(listener, handler)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot start http -> grpc gateway server")
 	}
