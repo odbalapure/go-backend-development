@@ -3,15 +3,18 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log"
 	"net"
 	"net/http"
+	"os"
 	"simple-bank/api"
 	db "simple-bank/db/sqlc"
 	_ "simple-bank/doc/statik"
 	"simple-bank/gapi"
 	"simple-bank/pb"
 	"simple-bank/util"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -26,10 +29,17 @@ import (
 
 func main() {
 	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot load config")
+	}
+
+	if config.Environment == "development" {
+		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+	}
 
 	conn, err := sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {
-		log.Fatal("cannot connect to db: ", err)
+		log.Fatal().Err(err).Msg("cannot connect to db")
 	}
 
 	// Run DB migration
@@ -47,23 +57,28 @@ func main() {
 func runDBMigration(migrationUrl string, dbSource string) {
 	migration, err := migrate.New(migrationUrl, dbSource)
 	if err != nil {
-		log.Fatal("cannot create migration instance:", err)
+		log.Fatal().Err(err).Msg("cannot create migration instance")
 	}
 
 	if err = migration.Up(); err != nil && err != migrate.ErrNoChange {
-		log.Fatal("failed to run migration up:", err)
+		log.Fatal().Err(err).Msg("failed to run migration up")
 	}
 
-	log.Println("db migrated successfully")
+	log.Info().Msg("db migrated successfully")
 }
 
 func runGrpcServer(config util.Config, store db.Store) {
 	server, err := gapi.NewServer(config, store)
 	if err != nil {
-		log.Fatal("cannot create server:", err)
+		log.Fatal().Err(err).Msg("cannot create server")
 	}
 
-	grpcServer := grpc.NewServer()
+	// gRPC logger
+	grpcLogger := grpc.UnaryInterceptor(gapi.GrpcLogger)
+
+	// gRPC server
+	grpcServer := grpc.NewServer(grpcLogger)
+
 	pb.RegisterSimpleBankServer(grpcServer, server)
 	// This allows a gRPC client to explore what RPC are available in the server
 	// Sort of a self documentation for a server
@@ -71,21 +86,21 @@ func runGrpcServer(config util.Config, store db.Store) {
 
 	listener, err := net.Listen("tcp", config.GRPCServerAddress)
 	if err != nil {
-		log.Fatal("cannot create listener:", err)
+		log.Fatal().Err(err).Msg("cannot create listener")
 	}
 
-	log.Printf("gRPC server started at %s", listener.Addr().String())
+	log.Info().Str("address", listener.Addr().String()).Msg("gRPC server started")
 
 	err = grpcServer.Serve(listener)
 	if err != nil {
-		log.Fatal("cannot start gRPC server:", err)
+		log.Fatal().Err(err).Msg("cannot start gRPC server")
 	}
 }
 
 func runGatewayServer(config util.Config, store db.Store) {
 	server, err := gapi.NewServer(config, store)
 	if err != nil {
-		log.Fatal("cannot create server:", err)
+		log.Fatal().Err(err).Msg("cannot create server")
 	}
 
 	grpcMux := runtime.NewServeMux(
@@ -105,7 +120,7 @@ func runGatewayServer(config util.Config, store db.Store) {
 
 	err = pb.RegisterSimpleBankHandlerServer(ctx, grpcMux, server)
 	if err != nil {
-		log.Fatal("cannot register http -> grpc gateway handler:", err)
+		log.Fatal().Err(err).Msg("cannot register http -> grpc gateway handler")
 	}
 
 	mux := http.NewServeMux()
@@ -120,7 +135,7 @@ func runGatewayServer(config util.Config, store db.Store) {
 	// This is much faster than serving from the disk.
 	statikFS, err := fs.New()
 	if err != nil {
-		log.Fatal("cannot create statik file system:", err)
+		log.Fatal().Err(err).Msg("cannot create statik file system")
 	}
 
 	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
@@ -128,23 +143,23 @@ func runGatewayServer(config util.Config, store db.Store) {
 
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
-		log.Fatal("cannot create http -> grpc gateway listener:", err)
+		log.Fatal().Err(err).Msg("cannot create http -> grpc gateway listener")
 	}
 
 	err = http.Serve(listener, mux)
 	if err != nil {
-		log.Fatal("cannot start http -> grpc gateway server:", err)
+		log.Fatal().Err(err).Msg("cannot start http -> grpc gateway server")
 	}
 }
 
 func runGinServer(config util.Config, store db.Store) {
 	server, err := api.NewServer(config, store)
 	if err != nil {
-		log.Fatal("cannot create server:", err)
+		log.Fatal().Err(err).Msg("cannot create server")
 	}
 
 	err = server.Start(config.HTTPServerAddress)
 	if err != nil {
-		log.Fatal("cannot start server:", err)
+		log.Fatal().Err(err).Msg("cannot start server")
 	}
 }

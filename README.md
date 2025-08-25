@@ -10,3 +10,4 @@ Table of content:
 - [Session](docs/SESSION.md)
 - [gRPC](docs/GRPC.md)
 - [Swagger](docs/SWAGGER.md)
+- [Logging](docs/LOGGING.md)

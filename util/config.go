@@ -17,6 +17,7 @@ type Config struct {
 	RefreshTokenDuration time.Duration `mapstructure:"REFRESH_TOKEN_DURATION"`
 	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
+	Environment          string        `mapstructure:"ENVIRONMENT"`
 }
 
 // Read configurations from file or `env` variables
