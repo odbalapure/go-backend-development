@@ -443,3 +443,51 @@ if violations != nil {
 ```
 
 > The `violations` slice is accessible because of Go's named return values.
+
+## Partial update
+
+For partial update, we add the `optional` keyword for our types:
+
+```proto
+message UpdateUserRequest {
+    string username = 1;
+    optional string password = 2;
+    optional string full_name = 3;
+    optional string email = 4;
+}
+```
+
+Also, we need to use the correct DB query as per the `sqlc` docs:
+
+```sql
+-- name: UpdateUser :one
+UPDATE users
+SET
+  hashed_password = COALESCE(sqlc.narg(hashed_password), hashed_password),
+  password_changed_at = COALESCE(sqlc.narg(password_changed_at), password_changed_at),
+  full_name = COALESCE(sqlc.narg(full_name), full_name),
+  email = COALESCE(sqlc.narg(email), email)
+WHERE username = sqlc.arg(username)
+RETURNING *;
+```
+
+Since these fields optional we need to change the param types for database update function inputs:
+
+```go
+arg := db.UpdateUserParams{
+	Username: req.GetUsername(),
+	FullName: sql.NullString{String: req.GetFullName(), Valid: req.FullName != nil},
+	Email:    sql.NullString{String: req.GetEmail(), Valid: req.Email != nil},
+}
+
+if req.Password != nil {
+	hashedPassword, err := util.HashPassword(*req.Password)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to hash password: %v", err)
+	}
+	// Validation is not required again
+	arg.HashedPassword = sql.NullString{String: hashedPassword, Valid: true}
+	// Update password_changed_at to current time
+	arg.PasswordChangedAt = sql.NullTime{Time: time.Now(), Valid: true}
+}
+```

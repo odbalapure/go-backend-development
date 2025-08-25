@@ -50,7 +50,7 @@ func TestTransfer(t *testing.T) {
 		require.NotEmpty(t, transfer)
 		require.Equal(t, account1.ID, transfer.FromAccountID)
 		require.Equal(t, account2.ID, transfer.ToAccountID)
-		require.Equal(t, amount, transfer.Amount)
+		require.Equal(t, amount, transfer.Amount.Int64)
 		require.NotEmpty(t, transfer.ID)
 		require.NotEmpty(t, transfer.CreatedAt)
 
