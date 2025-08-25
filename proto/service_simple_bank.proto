@@ -4,6 +4,7 @@ package pb;
 
 import "rpc_create_user.proto";
 import "rpc_login_user.proto";
+import "rpc_update_user.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -12,7 +13,7 @@ option go_package = "simple-bank/pb";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "Simple Bank API"
-    version: "1.1"
+    version: "1.2"
     contact: {
       name: "Personal Project"
       url: "https://github.com/go-backend-development"
@@ -40,6 +41,17 @@ service SimpleBank {
           summary: "Create new User"
           tags: "create_user"
         };
+    }
+    rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {
+      option (google.api.http) = {
+        patch: "/v1/update_user"
+        body: "*"
+      };
+      option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+        description: "This API updates a user using gRPC"
+        summary: "Update User"
+        tags: "update_user"
+      };
     }
     rpc LoginUser(LoginUserRequest) returns (LoginUserResponse) {
         option (google.api.http) = {
