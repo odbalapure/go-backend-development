@@ -5,6 +5,7 @@ import (
 	db "simple-bank/db/sqlc"
 	"simple-bank/token"
 	"simple-bank/util"
+	"simple-bank/worker"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -17,11 +18,12 @@ type Server struct {
 	store      db.Store
 	tokenMaker token.Maker
 	// Router will send each API request to correct handler
-	router *gin.Engine
+	router          *gin.Engine
+	taskDistributor worker.TaskDistributor
 }
 
 // Creates a new HTTP server and setup routing
-func NewServer(config util.Config, store db.Store) (*Server, error) {
+func NewServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) (*Server, error) {
 	// We can choose from JWT or Paseto that implement the same Maker interface
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
@@ -29,9 +31,10 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	}
 
 	server := &Server{
-		config:     config,
-		store:      store,
-		tokenMaker: tokenMaker,
+		config:          config,
+		store:           store,
+		tokenMaker:      tokenMaker,
+		taskDistributor: taskDistributor,
 	}
 
 	if v, ok := binding.Validator.Engine().(*validator.Validate); ok {

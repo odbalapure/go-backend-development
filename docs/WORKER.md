@@ -33,3 +33,61 @@ And many others [here](https://github.com/hibiken/asynq?tab=readme-ov-file#featu
 ```go
 go get github.com/hibiken/asynq
 ```
+
+## Integrate the Redis worker
+
+`asynq` needs redis to operate; start a redis container using:
+
+```sh
+docker run --name redis -p 6379:6379 -d redis:7-alpine
+```
+
+Check if the redis container is up and running:
+
+```sh
+2aa2eb1a6338551c50c342a8f973cecc2e4a287b2ead652b45510f05d4bc6c59
+ombalapure@Oms-MacBook-Air simple-bank % docker exec -it redis redis-cli ping 
+PONG
+```
+
+## Submitting and processing tasks
+
+We can specify the queues along with their priorities while creating the `asynq` server:
+
+```go
+const (
+	QueueCritical = "critical"
+	QueueDefault  = "default"
+)
+
+server := asynq.NewServer(
+    redisOpt,
+    // Max no. processing of concurrent tasks
+    // Retry delay for failed tasks
+    // Error returned by handler is a failure etc.
+    // Set priority of queues
+    asynq.Config{
+        Queues: map[string]int{
+            QueueCritical: 10,
+            QueueDefault:  5,
+        },
+    },
+)
+```
+
+> We are naming the queues and their priorities. The name can be anything; its just a string.
+
+Submitting the task to the "processor", here we can provide options like # of retries, interval between retries etc.:
+
+```go
+opts := []asynq.Option{
+    // No. of retries
+    asynq.MaxRetry(10),
+    // Add a delay between retries
+    asynq.ProcessIn(10 * time.Second),
+    // Name of the queue
+    // NOTE: Update the `processor` to listen to this queue
+    asynq.Queue(worker.QueueCritical),
+}
+err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+```

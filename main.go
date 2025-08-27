@@ -12,7 +12,9 @@ import (
 	"simple-bank/gapi"
 	"simple-bank/pb"
 	"simple-bank/util"
+	"simple-bank/worker"
 
+	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
@@ -45,13 +47,34 @@ func main() {
 	// Run DB migration
 	runDBMigration(config.MigrationURL, config.DBSource)
 
+	// Create a new store
 	store := db.NewStore(conn)
+
+	// Create a new redis client
+	redisOptions := asynq.RedisClientOpt{
+		Addr: config.RedisAddress,
+	}
+
+	// Create a new task distributor
+	taskDistributor := worker.NewRedisTaskDistributor(redisOptions)
 
 	// So config and store are single source of truth being passed to both servers
 	// This is a bit weird, but it's a good way to ensure that the config and store are consistent across both servers.
 	// runGinServer(config, store)
-	go runGatewayServer(config, store)
-	runGrpcServer(config, store)
+	go runGatewayServer(config, store, taskDistributor)
+	go runTaskProcessor(redisOptions, store)
+	runGrpcServer(config, store, taskDistributor)
+}
+
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+
+	err := taskProcessor.Start()
+	if err != nil {
+		log.Fatal().Err(err).Msg("cannot start task processor")
+	}
+
+	log.Info().Msg("task processor started")
 }
 
 func runDBMigration(migrationUrl string, dbSource string) {
@@ -67,8 +90,8 @@ func runDBMigration(migrationUrl string, dbSource string) {
 	log.Info().Msg("db migrated successfully")
 }
 
-func runGrpcServer(config util.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+func runGrpcServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
 	}
@@ -97,8 +120,8 @@ func runGrpcServer(config util.Config, store db.Store) {
 	}
 }
 
-func runGatewayServer(config util.Config, store db.Store) {
-	server, err := gapi.NewServer(config, store)
+func runGatewayServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server, err := gapi.NewServer(config, store, taskDistributor)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
 	}
@@ -159,8 +182,8 @@ func runGatewayServer(config util.Config, store db.Store) {
 	}
 }
 
-func runGinServer(config util.Config, store db.Store) {
-	server, err := api.NewServer(config, store)
+func runGinServer(config util.Config, store db.Store, taskDistributor worker.TaskDistributor) {
+	server, err := api.NewServer(config, store, taskDistributor)
 	if err != nil {
 		log.Fatal().Err(err).Msg("cannot create server")
 	}

@@ -6,7 +6,10 @@ import (
 	"simple-bank/pb"
 	"simple-bank/util"
 	"simple-bank/val"
+	"simple-bank/worker"
+	"time"
 
+	"github.com/hibiken/asynq"
 	"github.com/lib/pq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
@@ -41,6 +44,25 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 			}
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
+	}
+
+	// TODO: Create transaction to create and verify user
+	taskPayload := &worker.PayloadSendVerifyEmail{
+		Username: user.Username,
+	}
+
+	opts := []asynq.Option{
+		// No. of retries
+		asynq.MaxRetry(10),
+		// Add a delay between retries
+		asynq.ProcessIn(10 * time.Second),
+		// Name of the queue
+		// NOTE: Update the `processor` to listen to this queue
+		asynq.Queue(worker.QueueCritical),
+	}
+	err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email: %v", err)
 	}
 
 	rsp := &pb.CreateUserResponse{

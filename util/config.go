@@ -18,6 +18,7 @@ type Config struct {
 	GRPCServerAddress    string        `mapstructure:"GRPC_SERVER_ADDRESS"`
 	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
 	Environment          string        `mapstructure:"ENVIRONMENT"`
+	RedisAddress         string        `mapstructure:"REDIS_ADDRESS"`
 }
 
 // Read configurations from file or `env` variables

@@ -56,5 +56,8 @@ proto:
 evans:
 	evans --host localhost --port 9090 -r repl
 
+redis:
+	docker run --name redis -p 6379:6379 -d redis:7-alpine
+
 # Tells make that these are not file names
-.PHONY: createdb dropdb remove migrateup migratedown sqlc test server migrateup1 migratedown1 proto evans
+.PHONY: createdb dropdb remove migrateup migratedown sqlc test server migrateup1 migratedown1 proto evans redis
