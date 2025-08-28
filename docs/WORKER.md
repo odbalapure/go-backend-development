@@ -91,3 +91,66 @@ opts := []asynq.Option{
 }
 err = server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
 ```
+
+## Send asynq task within a DB transaction
+
+Create a `tx_create_user.go` file and add the following:
+
+```go
+type CreateUserTxParams struct {
+	CreateUserParams
+	AfterCreate func(user User) error
+}
+
+type CreateUserTxResult struct {
+	User User `json:"user"`
+}
+
+func (store *SQLStore) CreateUserTx(ctx context.Context, arg CreateUserTxParams) (CreateUserTxResult, error) {
+	var result CreateUserTxResult
+
+	err := store.execTx(ctx, func(q *Queries) error {
+		var err error
+
+		result.User, err = q.CreateUser(ctx, arg.CreateUserParams)
+		if err != nil {
+			return err
+		}
+
+		return arg.AfterCreate(result.User)
+	})
+
+	return result, err
+}
+```
+
+> CreateUserTx is part of the `Store` interface.
+
+The `AfterCreate` is the function submits a task to the `asynq` queue.
+
+```go
+// rcp_create_user.go
+arg := db.CreateUserTxParams{
+    CreateUserParams: db.CreateUserParams{
+        Username:       req.GetUsername(),
+        HashedPassword: hashedPassword,
+        FullName:       req.GetFullName(),
+        Email:          req.GetEmail(),
+    },
+    AfterCreate: func(user db.User) error {
+        taskPayload := &worker.PayloadSendVerifyEmail{
+            Username: user.Username,
+        }
+        opts := []asynq.Option{
+            // No. of retries
+            asynq.MaxRetry(10),
+            // Add a delay between retries
+            asynq.ProcessIn(10 * time.Second),
+            // Name of the queue
+            // NOTE: Update the `processor` to listen to this queue
+            asynq.Queue(worker.QueueCritical),
+        }
+        return server.taskDistributor.DistributeTaskSendVerifyEmail(ctx, taskPayload, opts...)
+    },
+}
+```
