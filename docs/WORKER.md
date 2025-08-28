@@ -154,3 +154,36 @@ arg := db.CreateUserTxParams{
     },
 }
 ```
+
+## Retry error handler
+
+If the transaction fails there won't be any logs on the console. In case the transcation fails we need to see them.
+
+So we can add an ErrorHandler function for the same:
+
+```go
+asynq.Config{
+    Queues: map[string]int{
+        QueueCritical: 10,
+        QueueDefault:  5,
+    },
+    ErrorHandler: asynq.ErrorHandlerFunc(func(ctx context.Context, task *asynq.Task, err error) {
+        log.Error().Err(err).Str("type", task.Type()).
+            Bytes("payload", task.Payload()).Msg("process task failed")
+    }),
+},
+```
+
+Now try creating a user, stop the DB and look for the logs
+
+```sh
+8:13AM ERR process task failed error="failed to get user: dial tcp [::1]:5432: connect: connection refused" payload="{\"username\":\"ombalapure1\"}" type=task:send_verify_email
+```
+
+The retry happens because `task_send_verify_email.ProcessTaskSendVerifyEmail` is trying to get the details of the newly created user and send an email.
+
+The retries will happen 10 times, every 10 seconds. Now start the DB again, the transaction will succeed now:
+
+```sh
+8:14AM INF processed task email=ombalapure1@gmail.com type=task:send_verify_email username=ombalapure1
+```
