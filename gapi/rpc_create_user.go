@@ -61,9 +61,6 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 		}
 		return nil, status.Errorf(codes.Internal, "failed to create user: %v", err)
 	}
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to distribute task to send verify email: %v", err)
-	}
 
 	rsp := &pb.CreateUserResponse{
 		User: convertUser(txResult.User),

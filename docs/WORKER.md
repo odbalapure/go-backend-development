@@ -174,6 +174,8 @@ asynq.Config{
 },
 ```
 
+> `ErrorHandler` is necessary because it tells something went wrong during the transaction. If we don't see logs on an error, if would assume everything went fine.
+
 Now try creating a user, stop the DB and look for the logs
 
 ```sh
