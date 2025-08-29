@@ -19,6 +19,9 @@ type Config struct {
 	MigrationURL         string        `mapstructure:"MIGRATION_URL"`
 	Environment          string        `mapstructure:"ENVIRONMENT"`
 	RedisAddress         string        `mapstructure:"REDIS_ADDRESS"`
+	EmailSenderName      string        `mapstructure:"EMAIL_SENDER_NAME"`
+	EmailSenderAddress   string        `mapstructure:"EMAIL_SENDER_ADDRESS"`
+	EmailSenderPassword  string        `mapstructure:"EMAIL_SENDER_PASSWORD"`
 }
 
 // Read configurations from file or `env` variables
