@@ -108,3 +108,28 @@ func TestSendEmailWithGmail(t *testing.T) {
 ```
 
 > There are other email clients that require domain verification step eg: Amazon SES.
+
+Everytime this test run, an email will be sent out, so we skip this test using the `-short` flag. Add this flag while running the test command:
+
+```sh
+go test -v -short -cover ./...
+```
+
+Also, update the test function
+
+```go
+func TestSendEmailWithGmail(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+    // ...
+}
+```
+
+If we take a look at the console, the test will be skipped.
+
+```
+=== RUN   TestSendEmailWithGmail
+    sender_test.go:12: 
+--- SKIP: TestSendEmailWithGmail (0.00s)
+```
