@@ -19,6 +19,9 @@ down:
 restart:
 	make down && make up
 
+new_schema:
+	migrate create -ext sql -dir db/migration -seq $(name) 
+
 migrateup:
 	migrate -path db/migration -database "postgres://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
 
@@ -60,4 +63,4 @@ redis:
 	docker run --name redis -p 6379:6379 -d redis:7-alpine
 
 # Tells make that these are not file names
-.PHONY: createdb dropdb remove migrateup migratedown sqlc test server migrateup1 migratedown1 proto evans redis
+.PHONY: createdb dropdb remove migrateup migratedown sqlc test server migrateup1 migratedown1 proto evans redis new_schema

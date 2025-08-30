@@ -133,3 +133,39 @@ If we take a look at the console, the test will be skipped.
     sender_test.go:12: 
 --- SKIP: TestSendEmailWithGmail (0.00s)
 ```
+
+## Verify email
+
+Create a new table verify_emails, and add a foreign key in the user table. Apply the migration to the postgres DB.
+
+As usual, run `make sqlc` and `make mockgen`.
+
+First a DB record is created for the verify email:
+
+```go
+verifyEmail, err := processor.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
+	Username:   user.Username,
+	Email:      user.Email,
+	SecretCode: util.RandomString(32),
+})
+if err != nil {
+	return fmt.Errorf("failed to create verify email: %w", err)
+}
+```
+
+Now, invoke the `SendEmail` function:
+
+```go
+subject := "Welcome to Simple Bank"
+verifyUrl := fmt.Sprintf("http://localhost:8080/v1/verify_email?email_id=%d&secret_code=%s",
+	verifyEmail.ID, verifyEmail.SecretCode)
+content := fmt.Sprintf(`Hello %s,<br/>Thank you for registering with us!<br/>Please <a href="%s">click here</a> to verify your email address.`, user.FullName, verifyUrl)
+to := []string{user.Email}
+
+err = processor.mailer.SendEmail(subject, content, to, nil, nil, nil)
+if err != nil {
+	return fmt.Errorf("failed to send verify email: %w", err)
+}
+```
+
+> The `mailer` attribute needs to be added to the `RedisTaskProcessor` struct.

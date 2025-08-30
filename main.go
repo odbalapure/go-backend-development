@@ -18,6 +18,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"simple-bank/mail"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -62,12 +64,24 @@ func main() {
 	// This is a bit weird, but it's a good way to ensure that the config and store are consistent across both servers.
 	// runGinServer(config, store)
 	go runGatewayServer(config, store, taskDistributor)
-	go runTaskProcessor(redisOptions, store)
+	go runTaskProcessor(redisOptions, store, config)
 	runGrpcServer(config, store, taskDistributor)
 }
 
-func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store) {
-	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store)
+func runTaskProcessor(redisOpt asynq.RedisClientOpt, store db.Store, config util.Config) {
+	// Validate email configuration
+	if config.EmailSenderName == "" || config.EmailSenderAddress == "" || config.EmailSenderPassword == "" {
+		log.Fatal().Msg("email configuration is incomplete. Please set EMAIL_SENDER_NAME, EMAIL_SENDER_ADDRESS, and EMAIL_SENDER_PASSWORD")
+	}
+
+	// Create email sender
+	mailer := mail.NewGmailSender(
+		config.EmailSenderName,
+		config.EmailSenderAddress,
+		config.EmailSenderPassword,
+	)
+
+	taskProcessor := worker.NewRedisTaskProcessor(redisOpt, store, mailer)
 
 	err := taskProcessor.Start()
 	if err != nil {
