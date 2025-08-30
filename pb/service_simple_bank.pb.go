@@ -26,7 +26,7 @@ var File_service_simple_bank_proto protoreflect.FileDescriptor
 
 const file_service_simple_bank_proto_rawDesc = "" +
 	"\n" +
-	"\x19service_simple_bank.proto\x12\x02pb\x1a\x15rpc_create_user.proto\x1a\x14rpc_login_user.proto\x1a\x15rpc_update_user.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\xdf\x03\n" +
+	"\x19service_simple_bank.proto\x12\x02pb\x1a\x15rpc_create_user.proto\x1a\x14rpc_login_user.proto\x1a\x15rpc_update_user.proto\x1a\x16rpc_verify_email.proto\x1a\x1cgoogle/api/annotations.proto\x1a.protoc-gen-openapiv2/options/annotations.proto2\x80\x05\n" +
 	"\n" +
 	"SimpleBank\x12\xa0\x01\n" +
 	"\n" +
@@ -38,29 +38,35 @@ const file_service_simple_bank_proto_rawDesc = "" +
 	"\tLoginUser\x12\x14.pb.LoginUserRequest\x1a\x15.pb.LoginUserResponse\"X\x92A<\n" +
 	"\n" +
 	"login_user\x12\n" +
-	"Login User\x1a\"This API logs in a user using gRPC\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/login_userB\xfa\x01\x92A\xe6\x01\x12\xe3\x01\n" +
+	"Login User\x1a\"This API logs in a user using gRPC\x82\xd3\xe4\x93\x02\x13:\x01*\"\x0e/v1/login_user\x12\x9e\x01\n" +
+	"\vVerifyEmail\x12\x16.pb.VerifyEmailRequest\x1a\x17.pb.VerifyEmailResponse\"^\x92AC\n" +
+	"\fverify_email\x12\fVerify Email\x1a%This API verifies an email using gRPC\x82\xd3\xe4\x93\x02\x12\x12\x10/v1/verify_emailB\xfa\x01\x92A\xe6\x01\x12\xe3\x01\n" +
 	"\x0fSimple Bank API\"O\n" +
 	"\x10Personal Project\x12)https://github.com/go-backend-development\x1a\x10none@example.com*X\n" +
 	"\x14BSD 3-Clause License\x12@https://github.com/grpc-ecosystem/grpc-gateway/blob/main/LICENSE2\x031.2: \n" +
 	"\x15x-something-something\x12\a\x1a\x05yaddaZ\x0esimple-bank/pbb\x06proto3"
 
 var file_service_simple_bank_proto_goTypes = []any{
-	(*CreateUserRequest)(nil),  // 0: pb.CreateUserRequest
-	(*UpdateUserRequest)(nil),  // 1: pb.UpdateUserRequest
-	(*LoginUserRequest)(nil),   // 2: pb.LoginUserRequest
-	(*CreateUserResponse)(nil), // 3: pb.CreateUserResponse
-	(*UpdateUserResponse)(nil), // 4: pb.UpdateUserResponse
-	(*LoginUserResponse)(nil),  // 5: pb.LoginUserResponse
+	(*CreateUserRequest)(nil),   // 0: pb.CreateUserRequest
+	(*UpdateUserRequest)(nil),   // 1: pb.UpdateUserRequest
+	(*LoginUserRequest)(nil),    // 2: pb.LoginUserRequest
+	(*VerifyEmailRequest)(nil),  // 3: pb.VerifyEmailRequest
+	(*CreateUserResponse)(nil),  // 4: pb.CreateUserResponse
+	(*UpdateUserResponse)(nil),  // 5: pb.UpdateUserResponse
+	(*LoginUserResponse)(nil),   // 6: pb.LoginUserResponse
+	(*VerifyEmailResponse)(nil), // 7: pb.VerifyEmailResponse
 }
 var file_service_simple_bank_proto_depIdxs = []int32{
 	0, // 0: pb.SimpleBank.CreateUser:input_type -> pb.CreateUserRequest
 	1, // 1: pb.SimpleBank.UpdateUser:input_type -> pb.UpdateUserRequest
 	2, // 2: pb.SimpleBank.LoginUser:input_type -> pb.LoginUserRequest
-	3, // 3: pb.SimpleBank.CreateUser:output_type -> pb.CreateUserResponse
-	4, // 4: pb.SimpleBank.UpdateUser:output_type -> pb.UpdateUserResponse
-	5, // 5: pb.SimpleBank.LoginUser:output_type -> pb.LoginUserResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	3, // 3: pb.SimpleBank.VerifyEmail:input_type -> pb.VerifyEmailRequest
+	4, // 4: pb.SimpleBank.CreateUser:output_type -> pb.CreateUserResponse
+	5, // 5: pb.SimpleBank.UpdateUser:output_type -> pb.UpdateUserResponse
+	6, // 6: pb.SimpleBank.LoginUser:output_type -> pb.LoginUserResponse
+	7, // 7: pb.SimpleBank.VerifyEmail:output_type -> pb.VerifyEmailResponse
+	4, // [4:8] is the sub-list for method output_type
+	0, // [0:4] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -74,6 +80,7 @@ func file_service_simple_bank_proto_init() {
 	file_rpc_create_user_proto_init()
 	file_rpc_login_user_proto_init()
 	file_rpc_update_user_proto_init()
+	file_rpc_verify_email_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

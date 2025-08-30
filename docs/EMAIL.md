@@ -169,3 +169,45 @@ if err != nil {
 ```
 
 > The `mailer` attribute needs to be added to the `RedisTaskProcessor` struct.
+
+## Create verify email RPC
+
+Define the `rpc_verify_email.proto` file:
+
+```proto
+syntax = "proto3";
+
+package pb;
+
+option go_package = "simple-bank/pb";
+
+message VerifyEmailRequest {
+    int64 id = 1;
+    string secret_code = 2;
+}
+
+message VerifyEmailResponse {
+    bool is_verified = 1;
+}
+```
+
+Now create the RPC function in the `service_simple_bank.proto`
+
+```proto
+rpc VerifyEmail(VerifyEmailRequest) returns (VerifyEmailResponse) {
+	option (google.api.http) = {
+	get: "/v1/verify_email"
+	};
+	option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+	description: "This API verifies an email using gRPC"
+	summary: "Verify Email"
+	tags: "verify_email"
+	};
+}
+```
+
+Now run the `make proto` command, to generate the `Go` code.
+
+Since we are updating the user table and verify table, its better to run these queries as a transaction. 
+
+Please refer [this](../db/sqlc/tx_verify_email.go) file.
